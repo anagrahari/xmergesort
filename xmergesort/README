@@ -1,0 +1,120 @@
+-------------------------------
+LOADABLE MODULE FOR MERGE SORT
+-------------------------------
+
+--------------
+INTRODUCTION
+-------------
+
+* sys_xmergesort has been implemented in linx 4.6.0+ of centos operating system
+* sys_xmergesort will take two inputfile from user, mergesort them together and return the result in the outputfile based on certain flag conditions.
+
+---------------
+PROJECT FILES  
+---------------
+The following files are present in the folder hw1 -
+
+ xhw1.c - Implementation of user level program which will call sys_xmergesort() system call internally and return the result based on output.
+
+ sys_xmergesort.c - Implmentation of functionality of xmergesort system call done here.
+
+ xmergesort.h - Header file common to both user and kernel level program implementing structure of input arguments to be passed to kernel from userland.
+
+ Makefile - Used to make the program and convert it into executables.
+
+ README - Overall documentation of code and functionality is done here.
+
+ Kernel.config - It contains basic kernel config required for building kernel
+
+----------------------
+EXECUTION INSTRUCTIONS
+----------------------
+
+Executing make on kernel tree produces sys_mergesort.ko, sys_mergesort.o
+
+1. Command to Execute Program : 
+	
+	Execute make clean before make command
+
+	Execute sh install_module.sh
+
+	RUN Command :
+
+	./xhw1.c [-uaitd] outfile.txt inputfile1.txt inputfile2.txt
+
+
+	There are 5 flags based on which operation will be divided
+
+	1. -u flag : It will merge all unique strings and generate result in outputfile
+	2. -a flag : It will merge all strings irrespective of duplicates and generate result in outputfile.
+	3. -i flag : It will perform mergesort operation case insensitively amd generate result in outputfile.
+	4. -d flag : It will record the number of strings have been merged and copy the result to userland
+	5. -t flag : It will terminate if some small string found in between processing merge, else generate merged result.
+	6. Unique strings are taken as default case in no flag has been given
+
+2. "make all" will produce kernel module sys_xmergesort.ko and executable xhw1
+
+3. install module.sh for building and loading kernel module.
+
+-------------------
+USER LEVEL CHECKS
+-------------------
+
+	Certain user level checks are applied for getting correct input from user
+
+	1. Check for valid flags :	User cant give flags other than abive mentioned five flags.
+								User cant give one one flag multiple time as it will be treated as invalid input.
+	
+	2. Check for valid InputFiles : User can give only two input files, more or less will be treated invalid.
+						
+	3. Check for valid Outputfile : User can give only one outputfile, in which he want the genrated result.
+
+--------------------
+KERNEL LEVEL CHECKS 
+--------------------
+
+	Certain Kernel Level checks are added which are required since we are in kernel mode.
+
+	1. Validation for User Space :	Validation for user space
+
+	2. Validation in copying :	Validation in copying file from user space to kernel and viceversa.
+
+	3. Validate Inputfiles :	Both the Inputfiles should be valid inputfiles having read premission to be accessed.
+						  		Both Inputfiles should not match to the same inode number
+
+	4. Validate Outputfile :	Outfile name should be valid and can be created if not there in the path specified
+						  		Both Inputfiles and outputfile inode number should not be same.
+						  		Outputfile on partial write will be deleted from userland.
+						  		A tempfile to be created everytime and it should get renamed to outfile on successful merging else deleted from userland.
+
+	5. Validate Buffers :	A Buffer equal to PAGESIZE should be taken for both inputfiles and outfile
+					   		One temporary Buffer of PAGE_SIZE should be taken to store the previous inserted string.
+
+	6. Same File Path :		Validation check for whether input or output files have same inode address 
+ 
+---------------
+DESIGN DETAILS
+---------------
+	Four file pointers have been taken for
+	inputfile1, inputfile2, tempfile, outputfile
+
+	Four Buffers have been taken to run functionality for mergesort
+	1. inputbuffer1 - for buffering input from inputfile1
+	2. inputbuffer2 - for buffering input from inputfile2
+	3. outputbuffer - for outputting strings after every succesful merge operation
+	4. tempbuffer - for maintaining history of last inserted string.
+
+-------
+OUTPUT
+-------
+	Code will run for two input files and one outfile
+	Outputfile will get created in the path specified
+
+	For successful output :	syscall returned 0
+	For unsuccessful output : syscall returned xx (errno = xx)
+	For successful output with -d flag : syscall returned 0
+										 no. of sorted records are xx
+-----------
+LIMITATIONS
+----------
+	MergeSort working fine for all flags and two inputfiles. Few crash can be there in few cases or error 524, execute reboot and make clean in this case. 
